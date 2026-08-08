@@ -1,25 +1,26 @@
-from os.path import join
-
 import pygame
+from sprites import AnimatedSprite
 
 
-class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, groups, collision_sprites):
-        super().__init__(groups)
-        self.image = pygame.image.load(
-            join('images', 'player', '0.png')
-        ).convert_alpha()
-        self.rect = self.image.get_frect(center=pos)
+class Player(AnimatedSprite):
+    def __init__(self, frames, pos, groups, collision_sprites):
+        super().__init__(frames, pos, groups)
         self.collision_sprites = collision_sprites
         self.direction = pygame.Vector2(0, 0)
         self.speed = 400
         self.on_ground = False
         self.gravity_index = 1800
         self.jump_speed = 750
+        self.facing_right = True
 
     def input(self):
         keys = pygame.key.get_pressed()
         self.direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
+
+        if self.direction.x > 0:
+            self.facing_right = True
+        elif self.direction.x < 0:
+            self.facing_right = False
 
         if keys[pygame.K_SPACE]:
             self.jump()
@@ -35,8 +36,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.direction.x * self.speed * dt
         self.collision('horizontal')
 
-        self.apply_gravity(dt)
         self.on_ground = False
+        self.apply_gravity(dt)
         self.rect.y += self.direction.y * dt
         self.collision('vertical')
 
@@ -57,6 +58,22 @@ class Player(pygame.sprite.Sprite):
                         self.rect.top = sprite.rect.bottom
                         self.direction.y = 0
 
+    def animate(self, dt):
+        if not self.on_ground:
+            self.frame_index = 1
+        elif self.direction.x != 0:
+            self.frame_index += self.animation_speed * dt
+        else:
+            self.frame_index = 0
+
+        current_frame = self.frames[int(self.frame_index) % len(self.frames)]
+
+        if self.facing_right:
+            self.image = current_frame
+        else:
+            self.image = pygame.transform.flip(current_frame, True, False)
+
     def update(self, dt):
         self.input()
         self.move(dt)
+        self.animate(dt)
