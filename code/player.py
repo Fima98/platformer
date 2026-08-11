@@ -1,5 +1,6 @@
 import pygame
 from sprites import AnimatedSprite
+from timer import Timer
 
 
 class Player(AnimatedSprite):
@@ -13,6 +14,9 @@ class Player(AnimatedSprite):
         self.jump_speed = 750
         self.facing_right = True
 
+        # timer
+        self.shoot_timer = Timer(500)
+
     def input(self):
         keys = pygame.key.get_pressed()
         self.direction.x = int(keys[pygame.K_d]) - int(keys[pygame.K_a])
@@ -24,6 +28,10 @@ class Player(AnimatedSprite):
 
         if keys[pygame.K_SPACE]:
             self.jump()
+
+        if pygame.mouse.get_pressed()[0] and not self.shoot_timer:
+            print('shoot bullet')
+            self.shoot_timer.activate()
 
     def jump(self):
         if self.on_ground:
@@ -74,6 +82,7 @@ class Player(AnimatedSprite):
             self.image = pygame.transform.flip(current_frame, True, False)
 
     def update(self, dt):
+        self.shoot_timer.update()
         self.input()
         self.move(dt)
         self.animate(dt)

@@ -5,8 +5,9 @@ from groups import AllSprites
 from player import Player
 from pytmx.util_pygame import load_pygame
 from settings import *
-from sprites import Sprite
-from utils import import_folder, import_image
+from sprites import Bee, Sprite, Worm
+from timer import Timer
+from utils import audio_importer, import_folder, import_image
 
 
 class Game:
@@ -24,6 +25,17 @@ class Game:
         self.load_assetes()
         self.setup()
 
+        self.bee_timer = Timer(
+            duration=2000, func=self.create_bee, autostart=True, repeat=True
+        )
+
+    def create_bee(self):
+        Bee(
+            frames=self.bee_frames,
+            pos=(500, 600),
+            groups=(self.all_sprites),
+        )
+
     def load_assetes(self):
         # graphics
         self.player_frames = import_folder('images', 'player')
@@ -31,6 +43,8 @@ class Game:
         self.fire_surf = import_image('images', 'gun', 'fire')
         self.bee_frames = import_folder('images', 'enemies', 'bee')
         self.worm_frames = import_folder('images', 'enemies', 'worm')
+
+        self.audio = audio_importer('audio')
 
     def setup(self):
         tmx_map = load_pygame(join('data', 'maps', 'world.tmx'))
@@ -56,6 +70,18 @@ class Game:
                     groups=(self.all_sprites),
                     collision_sprites=self.collision_sprites,
                 )
+            elif obj.name == 'Bee':
+                Bee(
+                    frames=self.bee_frames,
+                    pos=(obj.x, obj.y),
+                    groups=(self.all_sprites),
+                )
+            elif obj.name == 'Worm':
+                Worm(
+                    frames=self.worm_frames,
+                    pos=(obj.x, obj.y),
+                    groups=(self.all_sprites),
+                )
 
     def run(self):
         while self.running:
@@ -66,6 +92,7 @@ class Game:
                     self.running = False
 
             # update
+            self.bee_timer.update()
             self.all_sprites.update(dt)
 
             # draw
