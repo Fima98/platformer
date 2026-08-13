@@ -5,7 +5,7 @@ from groups import AllSprites
 from player import Player
 from pytmx.util_pygame import load_pygame
 from settings import *
-from sprites import Bee, Sprite, Worm
+from sprites import Bee, Bullet, Fire, Sprite, Worm
 from timer import Timer
 from utils import audio_importer, import_folder, import_image
 
@@ -21,6 +21,7 @@ class Game:
         # groups
         self.all_sprites = AllSprites()
         self.collision_sprites = pygame.sprite.Group()
+        self.bullet_sprites = pygame.sprite.Group()
 
         self.load_assetes()
         self.setup()
@@ -35,6 +36,12 @@ class Game:
             pos=(500, 600),
             groups=(self.all_sprites),
         )
+
+    def create_bullet(self, pos, direction):
+        Bullet(
+            self.bullet_surf, pos, direction, (self.all_sprites, self.bullet_sprites)
+        )
+        Fire(self.fire_surf, pos, self.all_sprites, self.player)
 
     def load_assetes(self):
         # graphics
@@ -69,6 +76,7 @@ class Game:
                     pos=(obj.x, obj.y),
                     groups=(self.all_sprites),
                     collision_sprites=self.collision_sprites,
+                    create_bullet=self.create_bullet,
                 )
             elif obj.name == 'Bee':
                 Bee(

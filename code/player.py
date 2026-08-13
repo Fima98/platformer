@@ -4,7 +4,7 @@ from timer import Timer
 
 
 class Player(AnimatedSprite):
-    def __init__(self, frames, pos, groups, collision_sprites):
+    def __init__(self, frames, pos, groups, collision_sprites, create_bullet):
         super().__init__(frames, pos, groups)
         self.collision_sprites = collision_sprites
         self.direction = pygame.Vector2(0, 0)
@@ -13,6 +13,7 @@ class Player(AnimatedSprite):
         self.gravity_index = 1800
         self.jump_speed = 750
         self.facing_right = True
+        self.create_bullet = create_bullet
 
         # timer
         self.shoot_timer = Timer(500)
@@ -30,7 +31,12 @@ class Player(AnimatedSprite):
             self.jump()
 
         if pygame.mouse.get_pressed()[0] and not self.shoot_timer:
-            print('shoot bullet')
+            if self.facing_right:
+                bullet_pos = self.rect.midright
+            else:
+                bullet_pos = self.rect.midleft
+
+            self.create_bullet(bullet_pos, 1 if self.facing_right else -1)
             self.shoot_timer.activate()
 
     def jump(self):
