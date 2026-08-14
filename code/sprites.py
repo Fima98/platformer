@@ -1,3 +1,6 @@
+from math import sin
+from random import choice, randint
+
 import pygame
 from timer import Timer
 
@@ -19,20 +22,67 @@ class AnimatedSprite(Sprite):
         self.image = self.frames[int(self.frame_index) % len(self.frames)]
 
 
-class Bee(AnimatedSprite):
+class Enemy(AnimatedSprite):
     def __init__(self, frames, pos, groups):
         super().__init__(frames, pos, groups)
+        self.death_timer = Timer(200, func=self.kill)
+
+    def destroy(self):
+        self.death_timer.activate()
+        self.animation_speed = 0
+        self.image = pygame.mask.from_surface(self.image).to_surface()
+        self.image.set_colorkey('black')
 
     def update(self, dt):
-        self.animate(dt)
+        if not self.death_timer:
+            self.move(dt)
+            self.animate(dt)
+        self.constraint()
+        self.death_timer.update()
 
 
-class Worm(AnimatedSprite):
-    def __init__(self, frames, pos, groups):
+class Bee(Enemy):
+    def __init__(self, frames, pos, groups, speed):
         super().__init__(frames, pos, groups)
+        self.speed = speed
+        self.amplitude = randint(500, 600)
+        self.frequency = randint(300, 600)
 
-    def update(self, dt):
-        self.animate(dt)
+    def move(self, dt):
+        self.rect.x -= self.speed * dt
+        self.rect.y += (
+            sin(pygame.time.get_ticks() / self.frequency) * self.amplitude * dt
+        )
+
+    def constraint(self):
+        if self.rect.right <= 0:
+            self.kill()
+
+
+class Worm(Enemy):
+    def __init__(self, frames, rect, groups):
+        super().__init__(frames, rect.topleft, groups)
+        self.area = rect
+        self.speed = randint(160, 200)
+        self.direction = choice((1, -1))
+
+    def move(self, dt):
+        self.rect.x += self.direction * self.speed * dt
+
+    def constraint(self):
+        if self.rect.right >= self.area.right:
+            self.direction = -1
+        elif self.rect.left <= self.area.left:
+            self.direction = 1
+
+    def animate(self, dt):
+        self.frame_index += self.animation_speed * dt
+        current_frame = self.frames[int(self.frame_index) % len(self.frames)]
+
+        if self.direction == 1:
+            self.image = current_frame
+        else:
+            self.image = pygame.transform.flip(current_frame, True, False)
 
 
 class Bullet(Sprite):
